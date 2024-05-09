@@ -87,7 +87,6 @@ export async function watch(...tasks: Runnable[]) {
   while (true) {
     const watcher = fs.FsWatcher()
     for await (const _event of watcher.watch(".")) {
-      watcher.close();
       for (const task of tasks) {
         const result = await task.run();
         if (result.type === "failure") {
@@ -95,6 +94,7 @@ export async function watch(...tasks: Runnable[]) {
         }
         console.log(`Successfully built ${result.target}`);
       }
+      break;
     }
   }
 }
