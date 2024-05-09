@@ -1,4 +1,5 @@
 import * as path from "jsr:@std/path";
+import * as fs from "jsr:@cross/fs";
 
 export type Body = () => Promise<void>;
 export type Status = {
@@ -62,7 +63,7 @@ export class File implements Runnable {
         return result;
       }
     }
-    const target_mtime = await Deno.stat(this.#target).then((s) => s.mtime);
+    const target_mtime = await fs.stat(this.#target).then((s) => s.mtime);
     if (!target_mtime || target_mtime.getTime() <= deps_mtime.getTime()) {
       try {
         await this.#body?.();
@@ -84,8 +85,8 @@ export function file(
 
 export async function watch(...tasks: Runnable[]) {
   while (true) {
-    const watcher = Deno.watchFs(".");
-    for await (const _event of watcher) {
+    const watcher = fs.FsWatcher()
+    for await (const _event of watcher.watch(".")) {
       watcher.close();
       for (const task of tasks) {
         const result = await task.run();
