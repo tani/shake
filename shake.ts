@@ -83,10 +83,10 @@ export function file(
   return new File(String.raw(parts, ...placeholders));
 }
 
-export async function watch(...tasks: Runnable[]) {
+export async function watch(path: string, ...tasks: Runnable[]) {
   while (true) {
     const watcher = fs.FsWatcher()
-    for await (const _event of watcher.watch(".")) {
+    for await (const _event of watcher.watch(path)) {
       for (const task of tasks) {
         const result = await task.run();
         if (result.type === "failure") {
