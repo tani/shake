@@ -61,7 +61,7 @@ type Body = (() => Promise<void>) | (() => void);
 
 /**
  * Class representing a Task.
- * 
+ *
  * @export
  * @class Task
  * @implements {TaskLike}
@@ -69,14 +69,14 @@ type Body = (() => Promise<void>) | (() => void);
 export class Task implements TaskLike {
   /**
    * An array of dependencies for the task.
-   * 
+   *
    * @type {TaskLike[]}
    */
   deps: TaskLike[];
 
   /**
    * The body of the task.
-   * 
+   *
    * @private
    * @type {Body}
    */
@@ -84,7 +84,7 @@ export class Task implements TaskLike {
 
   /**
    * Creates an instance of Task.
-   * 
+   *
    * @param {TaskLike[]} [deps=[]] - The dependencies of the task.
    * @param {Body} [body=() => {}] - The body of the task.
    */
@@ -95,7 +95,7 @@ export class Task implements TaskLike {
 
   /**
    * Runs the task.
-   * 
+   *
    * @param {State} state - The current state of the task.
    * @returns {Promise<State>} - A promise that resolves to the new state after the task is run.
    */
@@ -107,7 +107,7 @@ export class Task implements TaskLike {
 
 /**
  * Class representing a File task.
- * 
+ *
  * @export
  * @class File
  * @implements {TaskLike}
@@ -115,7 +115,7 @@ export class Task implements TaskLike {
 export class File implements TaskLike {
   /**
    * The target file of the task.
-   * 
+   *
    * @private
    * @type {string}
    */
@@ -123,14 +123,14 @@ export class File implements TaskLike {
 
   /**
    * An array of dependencies for the task.
-   * 
+   *
    * @type {TaskLike[]}
    */
   deps: TaskLike[];
 
   /**
    * The body of the task.
-   * 
+   *
    * @private
    * @type {Body}
    */
@@ -138,7 +138,7 @@ export class File implements TaskLike {
 
   /**
    * Creates an instance of File.
-   * 
+   *
    * @param {string} target - The target file of the task.
    * @param {TaskLike[]} [deps=[]] - The dependencies of the task.
    * @param {Body} [body=() => {}] - The body of the task.
@@ -152,13 +152,22 @@ export class File implements TaskLike {
   /**
    * Runs the task.
    * The task is only run if any of its dependencies have been modified.
-   * 
+   *
    * @param {State} state - The current state of the task.
    * @returns {Promise<State>} - A promise that resolves to the new state after the task is run.
    */
   async run(state: State): Promise<State> {
-    const stat = await fs.stat(this.#target);
-    let mtime = stat.mtime ?? new Date(0);
+    let mtime: Date;
+    try {
+      const stat = await fs.stat(this.#target);
+      mtime = stat.mtime ?? new Date(0);
+    } catch (error) {
+      if (error instanceof fs.NotFoundError) {
+        mtime = new Date(0);
+      } else {
+        throw error;
+      }
+    }
     for (const s of state) {
       if (this.deps.includes(s.task) && s.mtime > mtime) {
         await this.#body();
@@ -172,7 +181,7 @@ export class File implements TaskLike {
 
 /**
  * Function to create a new File task.
- * 
+ *
  * @export
  * @param {TemplateStringsArray} parts - The string parts of the file path.
  * @param {...unknown[]} placeholders - The placeholders in the file path.
@@ -209,7 +218,7 @@ function topsort(tasks: TaskLike[]): TaskLike[] {
 
 /**
  * Asynchronously runs a set of tasks in topological order.
- * 
+ *
  * @export
  * @param {...TaskLike[]} tasks - The tasks to be run.
  * @returns {Promise<State>} - A promise that resolves to the final state after all tasks have been run.
@@ -224,7 +233,7 @@ export async function run(...tasks: TaskLike[]): Promise<State> {
 
 /**
  * Watches a file or directory and runs a set of tasks whenever a change is detected.
- * 
+ *
  * @export
  * @param {string} path - The path to the file or directory to watch.
  * @param {...TaskLike[]} tasks - The tasks to run whenever a change is detected.
