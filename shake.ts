@@ -141,12 +141,17 @@ export class File implements TaskLike {
    *
    * @param {string} target - The target file of the task.
    * @param {TaskLike[]} [deps=[]] - The dependencies of the task.
-   * @param {Body} [body=() => {}] - The body of the task.
+   * @param {Body} [body=() => { ... }] - The body of the task.
    */
   constructor(target: string, deps?: TaskLike[], body?: Body) {
     this.#target = target;
     this.deps = deps ?? [];
-    this.#body = body ?? (() => {});
+    this.#body = body ?? (async () => {
+      // If body is not provided, check if the target file exists.
+      if (!await fs.exists(target)) {
+        throw new fs.NotFoundError(target);
+      }
+    });
   }
 
   /**
