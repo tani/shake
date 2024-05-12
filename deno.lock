@@ -1,0 +1,93 @@
+{
+  "version": "3",
+  "packages": {
+    "specifiers": {
+      "jsr:@cross/deepmerge@^1.0.0": "jsr:@cross/deepmerge@1.0.0",
+      "jsr:@cross/dir@^1.1.0": "jsr:@cross/dir@1.1.0",
+      "jsr:@cross/env@^1.0.0": "jsr:@cross/env@1.0.2",
+      "jsr:@cross/fs": "jsr:@cross/fs@0.1.11",
+      "jsr:@cross/fs@^0.1.11": "jsr:@cross/fs@0.1.11",
+      "jsr:@cross/runtime@^1.0.0": "jsr:@cross/runtime@1.0.0",
+      "jsr:@cross/test": "jsr:@cross/test@0.0.9",
+      "jsr:@cross/utils@^0.7.0": "jsr:@cross/utils@0.7.1",
+      "jsr:@std/assert": "jsr:@std/assert@0.225.1",
+      "jsr:@std/assert@^0.224.0": "jsr:@std/assert@0.224.0",
+      "jsr:@std/fmt@^0.225.0": "jsr:@std/fmt@0.225.0",
+      "jsr:@std/internal@^0.225.0": "jsr:@std/internal@0.225.0",
+      "jsr:@std/path@^0.224.0": "jsr:@std/path@0.224.0",
+      "npm:@types/node": "npm:@types/node@18.16.19"
+    },
+    "jsr": {
+      "@cross/deepmerge@1.0.0": {
+        "integrity": "1e1318a74e31ba1959b9aa0acae8bd417b806f74ffd25ac07c90e12f83ad6b1d"
+      },
+      "@cross/dir@1.1.0": {
+        "integrity": "41eb779daf160f53bc33ef91f593f332fffc52ec9b81f87178db564718534e59",
+        "dependencies": [
+          "jsr:@cross/utils@^0.7.0"
+        ]
+      },
+      "@cross/env@1.0.2": {
+        "integrity": "28501ad1043c218a5b00fe5db27ec62c01ab16371bbe1b9d738496f0a7c5eeb8",
+        "dependencies": [
+          "jsr:@cross/deepmerge@^1.0.0"
+        ]
+      },
+      "@cross/fs@0.1.11": {
+        "integrity": "88fdde19a5c0b5517ccd1bf087a2cdae8f4e9acbd54b9688f5332af574b49f7d",
+        "dependencies": [
+          "jsr:@cross/dir@^1.1.0",
+          "jsr:@cross/env@^1.0.0",
+          "jsr:@cross/runtime@^1.0.0",
+          "jsr:@std/path@^0.224.0"
+        ]
+      },
+      "@cross/runtime@1.0.0": {
+        "integrity": "dddecdf99182df13d50279d1e473f715e83d41961c5c22edd7bb0c4c3cf8a76a"
+      },
+      "@cross/test@0.0.9": {
+        "integrity": "2aa8237a96a2f8f51ccc8fec71135616d223bf4f38dd89ba4f863037c85ddc56",
+        "dependencies": [
+          "jsr:@cross/runtime@^1.0.0"
+        ]
+      },
+      "@cross/utils@0.7.1": {
+        "integrity": "6cc50ad31b0904364188c43d10e3d4888d817a3d415528b014c27deb8a35564e"
+      },
+      "@std/assert@0.224.0": {
+        "integrity": "8643233ec7aec38a940a8264a6e3eed9bfa44e7a71cc6b3c8874213ff401967f"
+      },
+      "@std/assert@0.225.1": {
+        "integrity": "7342fa32a6d82c2c7c98ffea566baa9a892d04b22815b9fcf62cedeee5764f9c",
+        "dependencies": [
+          "jsr:@std/fmt@^0.225.0",
+          "jsr:@std/internal@^0.225.0"
+        ]
+      },
+      "@std/fmt@0.225.0": {
+        "integrity": "982e7d1a8b8869338cc5b58e2669f7c6889ea9822f1278494dc43edba7f4c4b4"
+      },
+      "@std/internal@0.225.0": {
+        "integrity": "6f501a91aa5ee992f8f9ffb45fa103bc04031df65f6a3550e1c5d7e6304cd34a"
+      },
+      "@std/path@0.224.0": {
+        "integrity": "55bca6361e5a6d158b9380e82d4981d82d338ec587de02951e2b7c3a24910ee6",
+        "dependencies": [
+          "jsr:@std/assert@^0.224.0"
+        ]
+      }
+    },
+    "npm": {
+      "@types/node@18.16.19": {
+        "integrity": "sha512-IXl7o+R9iti9eBW4Wg2hx1xQDig183jj7YLn8F7udNceyfkbn1ZxmzZXuak20gR40D7pIkIY1kYGx5VIGbaHKA==",
+        "dependencies": {}
+      }
+    }
+  },
+  "remote": {},
+  "workspace": {
+    "dependencies": [
+      "jsr:@cross/fs@^0.1.11"
+    ]
+  }
+}

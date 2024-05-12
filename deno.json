@@ -1,0 +1,16 @@
+{
+  "name": "@tani/shake",
+  "exports": "./shake.ts",
+  "version": "0.1.0",
+  "auhor": "Masaya Taniguchi",
+  "imports": {
+    "@cross/fs": "jsr:@cross/fs@^0.1.11"
+  },
+  "publish": {
+    "include": [
+      "README.md",
+      "shake.ts",
+      "LICENSE"
+    ]
+  }
+}
