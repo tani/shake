@@ -1,6 +1,9 @@
 # Shake
 
-A simple task runner/ dependency resolver for JavaScript.
+<p align="center">
+  <strong>A simple task runner/ dependency resolver for JavaScript. </strong><br /><br />
+  <img width="200" src="https://raw.githubusercontent.com/tani/shake/main/shake.avif" />
+</p>
 
 ## Usage
 
