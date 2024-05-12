@@ -1,110 +1,100 @@
-import * as path from "jsr:@std/path";
 import * as fs from "jsr:@cross/fs";
 
-export type Body = () => Promise<void>;
-export type Status = {
-  type: "success";
-  target: string;
+export interface Status {
+  task: TaskLike;
   mtime: Date;
-} | {
-  type: "failure";
-  target: string;
-  error: Error;
-};
-
-export interface Runnable {
-  run(): Promise<Status>;
 }
 
-export class Task implements Runnable {
-  #target: string;
-  #deps: Runnable[];
+export type State = Status[];
+
+function status(task: TaskLike, mtime: Date): Status {
+  return { task, mtime };
+}
+
+export interface TaskLike {
+  readonly deps: TaskLike[];
+  run(state: State): Promise<State>;
+}
+
+type Body = (() => Promise<void>) | (() => void);
+
+export class Task implements TaskLike {
+  deps: TaskLike[];
   #body: Body;
-  constructor(target: string, deps: Runnable[], body: Body) {
-    this.#target = target;
-    this.#deps = deps;
-    this.#body = body;
+  constructor(deps?: TaskLike[], body?: Body) {
+    this.deps = deps ?? [];
+    this.#body = body ?? (() => {});
   }
-  async run(): Promise<Status> {
-    for (const source of this.#deps) {
-      const result = await source.run();
-      if (result.type === "failure") {
-        return result;
-      }
-    }
-    try {
-      await this.#body();
-    } catch (error) {
-      return { type: "failure", target: this.#target, error };
-    }
-    return { type: "success", target: this.#target, mtime: new Date() };
+  async run(state: State): Promise<State> {
+    await this.#body();
+    return state.concat(status(this, new Date()));
   }
 }
 
-export class File implements Runnable {
-  #target: string;
-  #deps?: Runnable[];
-  #body?: Body;
-  constructor(target: string, deps?: Runnable[], body?: Body) {
-    const cwd = Deno.cwd();
-    this.#target = path.isAbsolute(target) ? target : path.join(cwd, target);
-    this.#deps = deps;
-    this.#body = body;
+export class File implements TaskLike {
+  #dst: string;
+  deps: TaskLike[];
+  #body: Body;
+  constructor(dst: string, deps?: TaskLike[], body?: Body) {
+    this.#dst = dst;
+    this.deps = deps ?? []
+    this.#body = body ?? (() => {});
   }
-  async run(): Promise<Status> {
-    let deps_mtime: Date = new Date(0);
-    for (const dependency of this.#deps ?? []) {
-      const result = await dependency.run();
-      if (result.type === "success") {
-        deps_mtime = deps_mtime.getTime() > result.mtime.getTime()
-          ? deps_mtime
-          : result.mtime;
-      } else {
-        return result;
-      }
+  async run(state: State): Promise<State> {
+    const depsMtime = state
+      .filter((s) => this.deps.includes(s.task))
+      .map((s) => s.mtime)
+      .reduce((a, b) => a > b ? a : b, new Date(0));
+    const stat = await fs.stat(this.#dst);
+    const mtime = stat.mtime ?? new Date(0);
+    if (depsMtime < mtime) {
+      return state.concat(status(this, mtime));
     }
-    const target_mtime = await fs.stat(this.#target).then((s) => s.mtime);
-    if (!target_mtime || target_mtime.getTime() <= deps_mtime.getTime()) {
-      try {
-        await this.#body?.();
-      } catch (error) {
-        return { type: "failure", target: this.#target, error };
-      }
-      return { type: "success", target: this.#target, mtime: new Date() };
-    }
-    return { type: "success", target: this.#target, mtime: target_mtime };
+    await this.#body();
+    return state.concat(status(this, mtime));
   }
 }
 
 export function file(
   parts: TemplateStringsArray,
   ...placeholders: unknown[]
-): Runnable {
+): TaskLike {
   return new File(String.raw(parts, ...placeholders));
 }
 
-export async function watch(path: string, ...tasks: Runnable[]) {
-  while (true) {
-    const watcher = fs.FsWatcher()
-    for await (const _event of watcher.watch(path)) {
-      for (const task of tasks) {
-        const result = await task.run();
-        if (result.type === "failure") {
-          console.error(`Failed at ${result.target}: ${result.error}`);
-        }
-        console.log(`Successfully built ${result.target}`);
-      }
-      break;
+export function topsort(tasks: TaskLike[]): TaskLike[] {
+  const sorted: TaskLike[] = [];
+  const visited = new Set<TaskLike>();
+  const visit = (task: TaskLike, path: TaskLike[]) => {
+    if (path.includes(task)) {
+      throw new Error("cyclic dependency");
     }
+    if (visited.has(task)) {
+      return;
+    }
+    visited.add(task);
+    for (const dep of task.deps) {
+      visit(dep, path.concat(task));
+    }
+    sorted.push(task);
+  };
+  for (const task of tasks) {
+    visit(task, []);
   }
+  return sorted;
 }
 
-export async function run(...tasks: Runnable[]) {
-  for (const task of tasks) {
-    const result = await task.run();
-    if (result.type === "failure") {
-      console.error(`Failed at ${result.target}: ${result.error}`);
-    }
-    console.log(`Successfully built ${result.target}`);
+export async function run(...tasks: TaskLike[]): Promise<State> {
+  let state: State = [];
+  for (const task of topsort(tasks)) {
+    state = await task.run(state);
+  }
+  return state;
+}
+
+export async function watch(path: string, ...tasks: TaskLike[]): Promise<void> {
+  const watcher = fs.FsWatcher();
+  for await (const _event of watcher.watch(path)) {
+    await run(...tasks);
   }
 }
