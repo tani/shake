@@ -174,7 +174,7 @@ export class File implements TaskLike {
       }
     }
     for (const s of state) {
-      if (this.deps.includes(s.task) && s.mtime > mtime) {
+      if (this.deps.includes(s.task) && s.mtime >= mtime) {
         await this.#body();
         mtime = new Date();
         break;
