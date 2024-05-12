@@ -37,20 +37,19 @@ export class File implements TaskLike {
   #body: Body;
   constructor(dst: string, deps?: TaskLike[], body?: Body) {
     this.#dst = dst;
-    this.deps = deps ?? []
+    this.deps = deps ?? [];
     this.#body = body ?? (() => {});
   }
   async run(state: State): Promise<State> {
-    const depsMtime = state
-      .filter((s) => this.deps.includes(s.task))
-      .map((s) => s.mtime)
-      .reduce((a, b) => a > b ? a : b, new Date(0));
     const stat = await fs.stat(this.#dst);
-    const mtime = stat.mtime ?? new Date(0);
-    if (depsMtime < mtime) {
-      return state.concat(status(this, mtime));
+    let mtime = stat.mtime ?? new Date(0);
+    for (const s of state) {
+      if (this.deps.includes(s.task) && s.mtime > mtime) {
+        await this.#body();
+        mtime = new Date();
+        break;
+      }
     }
-    await this.#body();
     return state.concat(status(this, mtime));
   }
 }
