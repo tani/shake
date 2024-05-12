@@ -140,18 +140,13 @@ export class File implements TaskLike {
    * Creates an instance of File.
    *
    * @param {string} target - The target file of the task.
-   * @param {TaskLike[]} [deps=[]] - The dependencies of the task.
-   * @param {Body} [body=() => { ... }] - The body of the task.
+   * @param {TaskLike[]} deps - The dependencies of the task.
+   * @param {Body} body - The body of the task.
    */
-  constructor(target: string, deps?: TaskLike[], body?: Body) {
+  constructor(target: string, deps: TaskLike[], body: Body) {
     this.#target = target;
-    this.deps = deps ?? [];
-    this.#body = body ?? (async () => {
-      // If body is not provided, check if the target file exists.
-      if (!await fs.exists(target)) {
-        throw new fs.NotFoundError(target);
-      }
-    });
+    this.deps = deps;
+    this.#body = body;
   }
 
   /**
@@ -165,7 +160,10 @@ export class File implements TaskLike {
     let mtime: Date;
     try {
       const stat = await fs.stat(this.#target);
-      mtime = stat.mtime ?? new Date(0);
+      if (!stat.mtime) {
+        throw new Error(`invalid mtime for ${this.#target}`);
+      }
+      mtime = stat.mtime;
     } catch (error) {
       if (error instanceof fs.NotFoundError) {
         mtime = new Date(0);
@@ -196,7 +194,18 @@ export function file(
   parts: TemplateStringsArray,
   ...placeholders: unknown[]
 ): TaskLike {
-  return new File(String.raw(parts, ...placeholders));
+  const task = {
+    deps: [],
+    run: async (state: State) => {
+      const path = String.raw(parts, ...placeholders);
+      const stat = await fs.stat(path);
+      if (!stat.mtime) {
+        throw new Error(`invalid mtime for ${path}`);
+      }
+      return state.concat(status(task, stat.mtime));
+    }
+  };
+  return task;
 }
 
 function topsort(tasks: TaskLike[]): TaskLike[] {
