@@ -171,14 +171,25 @@ export class File implements TaskLike {
         throw error;
       }
     }
-    for (const s of state) {
-      if (this.deps.includes(s.task) && s.mtime >= mtime) {
-        await this.#body();
-        mtime = new Date();
-        break;
-      }
+    /*
+     * The task should run if:
+     * - The target file does not exist.
+     * - Any of its dependencies have been modified.
+     */
+    let shouldRunBody = mtime.getTime() === 0;
+    for (let i = 0; i < state.length && !shouldRunBody; i++) {
+      const isDep = this.deps.includes(state[i].task);
+      const isModified = state[i].mtime >= mtime;
+      shouldRunBody = isDep && isModified;
     }
-    return state.concat(status(this, mtime));
+    if (shouldRunBody) {
+      await this.#body();
+    }
+    const stat = await fs.stat(this.#target);
+    if (!stat.mtime) {
+      throw new Error(`invalid mtime for ${this.#target}`);
+    }
+    return state.concat(status(this, stat.mtime));
   }
 }
 
@@ -194,18 +205,7 @@ export function file(
   parts: TemplateStringsArray,
   ...placeholders: unknown[]
 ): TaskLike {
-  const task = {
-    deps: [],
-    run: async (state: State) => {
-      const path = String.raw(parts, ...placeholders);
-      const stat = await fs.stat(path);
-      if (!stat.mtime) {
-        throw new Error(`invalid mtime for ${path}`);
-      }
-      return state.concat(status(task, stat.mtime));
-    }
-  };
-  return task;
+  return new File(String.raw(parts, ...placeholders), [], () => {});
 }
 
 function topsort(tasks: TaskLike[]): TaskLike[] {
