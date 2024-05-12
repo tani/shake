@@ -140,13 +140,13 @@ export class File implements TaskLike {
    * Creates an instance of File.
    *
    * @param {string} target - The target file of the task.
-   * @param {TaskLike[]} deps - The dependencies of the task.
-   * @param {Body} body - The body of the task.
+   * @param {TaskLike[]} [deps=[]] - The dependencies of the task.
+   * @param {Body} [body=() => {}] - The body of the task.
    */
-  constructor(target: string, deps: TaskLike[], body: Body) {
+  constructor(target: string, deps?: TaskLike[], body?: Body) {
     this.#target = target;
-    this.deps = deps;
-    this.#body = body;
+    this.deps = deps ?? [];
+    this.#body = body ?? (() => {});
   }
 
   /**
@@ -191,21 +191,6 @@ export class File implements TaskLike {
     }
     return state.concat(status(this, stat.mtime));
   }
-}
-
-/**
- * Function to create a new File task.
- *
- * @export
- * @param {TemplateStringsArray} parts - The string parts of the file path.
- * @param {...unknown[]} placeholders - The placeholders in the file path.
- * @returns {TaskLike} - A new File task.
- */
-export function file(
-  parts: TemplateStringsArray,
-  ...placeholders: unknown[]
-): TaskLike {
-  return new File(String.raw(parts, ...placeholders), [], () => {});
 }
 
 function topsort(tasks: TaskLike[]): TaskLike[] {

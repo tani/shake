@@ -12,7 +12,7 @@ import $ from 'jsr:@david/dax';
 import { File, file, Task, run, watch } from 'jsr:@tani/shake';
 
 // File task will be run only if the file is missing or older than the dependencies
-const hello = new File("hello.out", [file`hello.c`], async () => {
+const hello = new File("hello.out", [new File("hello.c")], async () => {
   await $`gcc -o hello.out hello.c`;
 });
 
