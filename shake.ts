@@ -193,27 +193,32 @@ export class FileTask implements TaskLike {
   }
 }
 
-function topsort(tasks: TaskLike[]): TaskLike[] {
-  const sorted: TaskLike[] = [];
-  const visited = new Set<TaskLike>();
-  const visit = (task: TaskLike, path: TaskLike[]) => {
+function findCycle(tasks: TaskLike[]): TaskLike[] | undefined {
+  function visit(path: TaskLike[], task: TaskLike): TaskLike[] | undefined {
     if (path.includes(task)) {
-      throw new Error("cyclic dependency");
+      return path.concat(task);
     }
-    if (visited.has(task)) {
-      return;
-    }
-    visited.add(task);
-    for (const dep of task.deps) {
-      visit(dep, path.concat(task));
-    }
-    sorted.push(task);
-  };
-  for (const task of tasks) {
-    visit(task, []);
+    return task.deps
+      .map((dep) => visit(path.concat(task), dep))
+      .find((cycle) => cycle && cycle.length > 0);
   }
-  return sorted;
+  return visit([], new Task(tasks, () => {}));
 }
+
+type TsortState = [TaskLike[], TaskLike[]];
+function tsort(tasks: TaskLike[]): TaskLike[] {
+  function visit(state: TsortState, task: TaskLike): TsortState {
+    const [visited0, sorted0] = state;
+    if (visited0.includes(task)) {
+      return [visited0, sorted0];
+    }
+    const [visited1, sorted1] = [visited0.concat(task), sorted0];
+    const [visited2, sorted2] = task.deps.reduce(visit, [visited1, sorted1]);
+    return [visited2, sorted2.concat(task)];
+  }
+  return tasks.reduce(visit, [[], []] as TsortState)[1];
+}
+
 
 /**
  * Asynchronously runs a set of tasks in topological order.
@@ -223,8 +228,11 @@ function topsort(tasks: TaskLike[]): TaskLike[] {
  * @returns {Promise<State>} - A promise that resolves to the final state after all tasks have been run.
  */
 export async function run(...tasks: TaskLike[]): Promise<State> {
+  if (findCycle(tasks) !== undefined) {
+    throw new Error("cyclic dependency");
+  }
   let state: State = [];
-  for (const task of topsort(tasks)) {
+  for (const task of tsort(tasks)) {
     state = await task.run(state);
   }
   return state;

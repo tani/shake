@@ -60,7 +60,7 @@ function isCyclic(n: boolean[]) {
 }
 
 test("run:task:multiple", async () => {
-  for (const vertices of binaries(3)) {
+  for (const vertices of binaries(4)) {
     for (const edges of binaries(vertices.length * vertices.length)) {
       const tasks = vertices.map((v) => new Task([], v ? () => {} : () => { throw new Error(); }));
       for (let i = 0; i < vertices.length; i++) {
