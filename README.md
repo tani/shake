@@ -9,10 +9,10 @@
 
 ```typescript
 import $ from 'jsr:@david/dax';
-import { File, Task, run, watch } from 'jsr:@tani/shake';
+import { FileTask, Task, run, watch } from 'jsr:@tani/shake';
 
 // File task will be run only if the file is missing or older than the dependencies
-const hello = new File("hello.out", [new File("hello.c")], async () => {
+const hello = new FileTask("hello.out", [new FileTask("hello.c")], async () => {
   await $`gcc -o hello.out hello.c`;
 });
 

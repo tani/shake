@@ -106,13 +106,13 @@ export class Task implements TaskLike {
 }
 
 /**
- * Class representing a File task.
+ * Class representing a FileTask task.
  *
  * @export
- * @class File
+ * @class FileTask
  * @implements {TaskLike}
  */
-export class File implements TaskLike {
+export class FileTask implements TaskLike {
   /**
    * The target file of the task.
    *
@@ -137,7 +137,7 @@ export class File implements TaskLike {
   #body: Body;
 
   /**
-   * Creates an instance of File.
+   * Creates an instance of FileTask.
    *
    * @param {string} target - The target file of the task.
    * @param {TaskLike[]} [deps=[]] - The dependencies of the task.

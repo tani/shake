@@ -1,7 +1,7 @@
 {
   "name": "@tani/shake",
   "exports": "./shake.ts",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "auhor": "Masaya Taniguchi",
   "imports": {
     "@cross/fs": "jsr:@cross/fs@^0.1.11"
